@@ -1,0 +1,56 @@
+if [ -z "$1" -o "$1" -lt 1 -o "$1" -gt 9 ]; then
+	echo "---------"
+	echo "- Usage -"
+	echo "---------"
+	echo "$0 <pop-id>"
+	echo ""
+	echo "Where <pop-id> is a number from 1 to 9"
+	echo ""
+	exit 1
+fi
+
+POP="$1"
+DYNAMIPS_PORT=$[ 7010 + $POP ];
+
+echo "---------------------------------------------"
+echo "- Starting Dynamips Hypervisor on port $DYNAMIPS_PORT -"
+echo "---------------------------------------------"
+
+cd ../working
+../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H $DYNAMIPS_PORT --filepid dynamips-${DYNAMIPS_PORT}.pid &> dynamips-${DYNAMIPS_PORT}.out &
+cd -
+
+sleep 1
+
+echo -n "PID: "
+cat ../working/dynamips-${DYNAMIPS_PORT}.pid
+echo ""
+
+echo ""
+echo "--------------------------------------------------------"
+echo "- Generating Dynagen configuration for customers pop $POP -"
+echo "--------------------------------------------------------"
+
+sed -e "s/\${POP}/$POP/g" -e "s/\${DYNAMIPS_PORT}/$DYNAMIPS_PORT/g" < topology-template.net > ../working/pop-customers-${POP}.net
+
+echo ""
+echo "-------------------------------------------------------------"
+echo "- Starting Dynagen with pop $POP customer router configuration -"
+echo "-------------------------------------------------------------"
+
+../bin/dynagen/dynagen ../working/pop-customers-${POP}.net
+
+echo ""
+echo "---------------------------------------------"
+echo "- Stopping Dynamips Hypervisor on port $DYNAMIPS_PORT -"
+echo "---------------------------------------------"
+
+kill `cat ../working/dynamips-${DYNAMIPS_PORT}.pid`
+
+echo -n "Killed PID: "
+cat ../working/dynamips-${DYNAMIPS_PORT}.pid
+echo ""
+
+rm -f ../working/dynamips-${DYNAMIPS_PORT}.pid
+
+echo ""
