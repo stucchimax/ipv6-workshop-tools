@@ -1,8 +1,12 @@
 #!/bin/bash
 
 # Go to my own directory
-MY_DIR=$(dirname $0)
-cd $MY_DIR
+MY_DIR=$(dirname "$0")
+cd "${MY_DIR}"
+MY_DIR=$(pwd -P)
+
+# Load image settings
+source ../settings/images
 
 echo "---------------------------------------------"
 echo "- Starting Dynamips Hypervisor on port 7000 -"
@@ -11,7 +15,7 @@ echo "---------------------------------------------"
 mkdir -p ../working
 cd ../working
 ../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H 7000 --filepid dynamips-7000.pid &> dynamips-7000.out &
-cd -
+cd "${MY_DIR}"
 
 sleep 1
 
@@ -20,11 +24,22 @@ cat ../working/dynamips-7000.pid
 echo ""
 
 echo ""
+echo "------------------------------------------------------"
+echo "- Generating Dynagen configuration for core switches -"
+echo "------------------------------------------------------"
+
+sed -e "s/\${C3725_IMAGE}/${C3725_IMAGE}/g" \
+    -e "s/\${C3725_IDLEPC}/${C3725_IDLEPC}/g" \
+    -e "s/\${C3725_RAM}/${C3725_RAM}/g" \
+    < topology-template.net \
+    > ../working/core-switches.net
+
+echo ""
 echo "---------------------------------------------------"
 echo "- Starting Dynagen with core switch configuration -"
 echo "---------------------------------------------------"
 
-../bin/dynagen/dynagen topology.net
+../bin/dynagen/dynagen ../working/core-switches.net
 
 echo ""
 echo "---------------------------------------------"

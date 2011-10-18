@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Go to my own directory
+MY_DIR=$(dirname "$0")
+cd "${MY_DIR}"
+MY_DIR=$(pwd -P)
+
+# Check command line
+if [[ "$1" != [1-9] ]]; then
+	echo "---------"
+	echo "- Usage -"
+	echo "---------"
+	echo "$0 <pop-count>"
+	echo ""
+	echo "Where <pop-count> is a number from 1 to 9"
+	echo ""
+	exit 1
+fi
+
+POP_COUNT="$1"
+
+# Generate configs
+./cfg-generator/generate-v4only "${POP_COUNT}"
+
+echo "-------------------------------------"
+echo "- Starting lab sections with ${POP_COUNT} POPs -"
+echo "-------------------------------------"
+
+osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/core-switches/run; exit\"" &> /dev/null
+osascript -e "tell application \"Terminal\" to tell its front window to tell its selected tab to set its custom title to \"Core-Switches\""
+
+for POP in `seq 1 ${POP_COUNT}`; do
+	osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-routers/run ${POP}; exit\"" &> /dev/null
+	osascript -e "tell application \"Terminal\" to tell its front window to tell its selected tab to set its custom title to \"POP${POP} Routers\""
+	
+	sleep 5
+
+	osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-customers/run ${POP}; exit\"" &> /dev/null
+	osascript -e "tell application \"Terminal\" to tell its front window to tell its selected tab to set its custom title to \"POP${POP} Customers\""
+	
+	sleep 5
+done

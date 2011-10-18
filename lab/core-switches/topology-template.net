@@ -6,9 +6,9 @@ ghostios = True
 	udp = 50100
 	
 	[[3725]]
-		image = ../../images/c3725-advipservicesk9-mz.124-25b.image
-		ram = 128
-		idlepc = 0x60a837b0
+		image = ../images/${C3725_IMAGE}
+		idlepc = ${C3725_IDLEPC}
+		ram = ${C3725_RAM}
 	
 	[[ROUTER SW1]]
 		model = 3725

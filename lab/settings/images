@@ -1,0 +1,9 @@
+# The Cisco 3725 image for the core switches
+C3725_IMAGE=c3725-advipservicesk9-mz.124-25b.image
+C3725_IDLEPC=0x60a837b0
+C3725_RAM=128
+
+# The Cisco 7200 image for the routers
+C7200_IMAGE=c7200-advipservicesk9-mz.151-4.M1.image
+C7200_IDLEPC=0x606099c4
+C7200_RAM=200

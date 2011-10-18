@@ -4,3 +4,6 @@
 # Auto-generated python files
 *.pyc
 *.pyo
+
+# Mac OS Stuff
+.DS_Store
