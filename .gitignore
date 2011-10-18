@@ -1,0 +1,6 @@
+# Editor backup files
+*~
+
+# Auto-generated python files
+*.pyc
+*.pyo

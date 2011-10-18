@@ -1,0 +1,3 @@
+# Files generated when accidentally running dynamips in this directory
+ilt_*
+dynamips_log.txt

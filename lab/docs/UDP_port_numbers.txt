@@ -1,0 +1,41 @@
+Numbering for UDP ports for connections between lab segments
+------------------------------------------------------------
+
+Structure for manual port numbers:
+{FUNCTION}{LOCACTION}{SIDE}{ROUTER}{PORT}
+
+FUNCTIONS:
+1: ISP network
+2: Customer network
+5: Auto-generated UDP ports
+
+LOCATIONS:
+0: Core switches
+1: POP 1
+2: POP 2
+3: POP 3
+4: POP 4
+5: POP 5
+6: POP 6
+7: POP 7
+8: POP 8
+9: POP 9
+
+SIDE:
+0: Reserved for Console and Aux
+1: Core switch side
+2: POP router side
+3: Customer router side
+
+ROUTERS:
+1 ≤ ROUTER ≤ 9
+
+PORTS for network connections:
+0 ≤ PORT ≤ 9
+The SIDE with the lowest value determines the port
+If both SIDEs are equal the lowers LOCATION number determines the port
+If both SIDEs and LOCATIONs are equal the lowest ROUTER number determines the port
+
+PORTS for console and aux:
+0: Console
+1: Aux

@@ -1,0 +1,42 @@
+autostart = True
+ghostios = True
+
+[localhost:${DYNAMIPS_PORT}]
+	workingdir = .
+	udp = 5${POP}200
+	
+	[[7200]]
+		image = ../../images/c7200-advipservicesk9-mz.151-4.M1.image
+		ram = 200
+		idlepc = 0x606099c4
+	
+	[[ROUTER POP${POP}-R1]]
+		model = 7200
+		console = 1${POP}010
+		aux = 1${POP}011
+		slot0 = C7200-IO-2FE
+		slot1 = PA-4E
+		f0/0 = POP${POP}-R3 f0/1
+		f0/1 = POP${POP}-R2 f0/0
+		e1/0 = nio_udp:1${POP}210:127.0.0.1:1${POP}310
+	
+	[[ROUTER POP${POP}-R2]]
+		model = 7200
+		console = 1${POP}020
+		aux = 1${POP}021
+		slot0 = C7200-IO-2FE
+		slot1 = PA-4E
+		f0/0 = POP${POP}-R1 f0/1
+		f0/1 = POP${POP}-R3 f0/0
+		e1/0 = nio_udp:1021${POP}:127.0.0.1:1011${POP}
+		e1/1 = nio_udp:1022${POP}:127.0.0.1:1012${POP}
+	
+	[[ROUTER POP${POP}-R3]]
+		model = 7200
+		console = 1${POP}030
+		aux = 1${POP}031
+		slot0 = C7200-IO-2FE
+		slot1 = PA-4E
+		f0/0 = POP${POP}-R2 f0/1
+		f0/1 = POP${POP}-R1 f0/0
+		e1/0 = nio_udp:1${POP}230:127.0.0.1:1${POP}330
