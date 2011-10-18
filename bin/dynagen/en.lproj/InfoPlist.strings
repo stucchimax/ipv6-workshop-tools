@@ -1,4 +1,0 @@
-CFBundleName = "Dynagen";
-CFBundleShortVersionString = "0.11.0-111807";
-CFBundleGetInfoString = "Dynagen version 0.11.0-111807 Copyright 2008 Greg Anuzelli";
-NSHumanReadableCopyright = "Copyright 2008 Greg Anuzelli.";
