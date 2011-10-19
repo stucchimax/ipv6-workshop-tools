@@ -10,9 +10,9 @@ if [[ "$1" != [1-9] ]]; then
 	echo "---------"
 	echo "- Usage -"
 	echo "---------"
-	echo "$0 <pop-count>"
+	echo "$0 <POP-count>"
 	echo ""
-	echo "Where <pop-count> is a number from 1 to 9"
+	echo "Where <POP-count> is a number from 1 to 9"
 	echo ""
 	exit 1
 fi

@@ -10,9 +10,9 @@ if [[ "$1" != [1-9] ]]; then
 	echo "---------"
 	echo "- Usage -"
 	echo "---------"
-	echo "$0 <pop-count>"
+	echo "$0 <POP-count>"
 	echo ""
-	echo "Where <pop-count> is a number from 1 to 9"
+	echo "Where <POP-count> is a number from 1 to 9"
 	echo ""
 	exit 1
 fi
@@ -20,7 +20,7 @@ fi
 POP_COUNT="$1"
 
 echo "-----------------------------------------------"
-echo "- Generating v4only configurations for ${POP_COUNT} pops -"
+echo "- Generating v4only configurations for ${POP_COUNT} POPs -"
 echo "-----------------------------------------------"
 
 DIR="../working/cfg-v4only"
@@ -34,7 +34,7 @@ for SWITCH in `seq 1 2`; do
 	CFG="SW${SWITCH}.cfg"
 	echo -n " ${CFG}"
 
-	sed -e "s/\${SWITCH}/${SWITCH}/g" < ${TPL} > ${DIR}/${CFG}
+	(IFS=""; while read -r line; do eval echo "\\${line}"; done; ) < ${TPL} > ${DIR}/${CFG}
 done
 echo ""
 
@@ -47,104 +47,180 @@ for POP in `seq 1 ${POP_COUNT}`; do
 		echo -n " ${CFG}"
 		
 		# Start with the template
-		sed -e "s/\${POP}/${POP}/g" -e "s/\${ROUTER}/${ROUTER}/g" < ${TPL} > ${DIR}/${CFG}
+		(IFS=""; while read -r line; do eval echo "\\${line}"; done; ) < ${TPL} > ${DIR}/${CFG}
 	done
 	echo ""
 	
-	echo -n "  - Configuring interfaces:"
+	echo -n "  - Customizing configuration per router:"
 	
 	CFG="POP${POP}-R1.cfg"
 	echo -n " ${CFG}"
-	cat >> ${DIR}/${CFG} <<EOF
-interface f0/0
- description "Link to POP${POP}-R3"
- ip address 10.${POP}.1.10 255.255.255.252
- no shutdown
-!
-interface f0/1
- description "Link to POP${POP}-R2"
- ip address 10.${POP}.1.1 255.255.255.252
- no shutdown
-!
-router bgp 65530
- address-family ipv4
-  neighbor 10.${POP}.0.2 peer-group POP${POP}-iBGP-IPv4
-  neighbor 10.${POP}.0.3 peer-group POP${POP}-iBGP-IPv4
-!
-EOF
+	cat >> ${DIR}/${CFG} <<-EOF
+		interface f0/0
+		 description "Link to POP${POP}-R3"
+		 ip address 172.16.1${POP}.10 255.255.255.252
+		 no shutdown
+		!
+		interface f0/1
+		 description "Link to POP${POP}-R2"
+		 ip address 172.16.1${POP}.1 255.255.255.252
+		 no shutdown
+		!
+		interface e1/0
+		 description "Link to POP${POP}-CUST1"
+		 ip address 172.16.2${POP}.1 255.255.255.252
+		 no cdp enable
+		 no shutdown
+		!
+		ip route 172.2${POP}.1.0 255.255.255.0 172.16.2${POP}.2
+		!
+		router bgp 65530
+		 address-family ipv4
+		  neighbor 172.16.${POP}.2 peer-group POP${POP}-iBGP-IPv4
+		  neighbor 172.16.${POP}.3 peer-group POP${POP}-iBGP-IPv4
+		!
+	EOF
 
 	CFG="POP${POP}-R2.cfg"
 	echo -n " ${CFG}"
-	cat >> ${DIR}/${CFG} <<EOF
-interface f0/0
- description "Link to POP${POP}-R1"
- ip address 10.${POP}.1.2 255.255.255.252
- no shutdown
-!
-interface f0/1
- description "Link to POP${POP}-R3"
- ip address 10.${POP}.1.5 255.255.255.252
- no shutdown
-!
-interface e1/0
- ip address 10.0.1.${POP} 255.255.255.192
- ip ospf 1 area 0.0.0.0
- ip ospf message-digest-key 1 md5 R04d5how-C0RE
- no shutdown
-!
-interface e1/1
- ip address 10.0.2.${POP} 255.255.255.192
- ip ospf 1 area 0.0.0.0
- ip ospf message-digest-key 1 md5 R04d5how-C0RE
- no shutdown
-!
-router ospf 1
- area 0.0.0.0 authentication message-digest
- area ${POP}.0.0.0 nssa default-information-originate no-summary
- no passive-interface e1/0
- no passive-interface e1/1
-!
-router bgp 65530
- address-family ipv4
-  neighbor POP${POP}-iBGP-IPv4 route-reflector-client
-  neighbor 10.${POP}.0.1 peer-group POP${POP}-iBGP-IPv4
-  neighbor 10.${POP}.0.3 peer-group POP${POP}-iBGP-IPv4
-  neighbor Core-iBGP-IPv4 peer-group
-  neighbor Core-iBGP-IPv4 remote-as 65530
-  neighbor Core-iBGP-IPv4 update-source Loopback0
-EOF
+	cat >> ${DIR}/${CFG} <<-EOF
+		interface f0/0
+		 description "Link to POP${POP}-R1"
+		 ip address 172.16.1${POP}.2 255.255.255.252
+		 no shutdown
+		!
+		interface f0/1
+		 description "Link to POP${POP}-R3"
+		 ip address 172.16.1${POP}.5 255.255.255.252
+		 no shutdown
+		!
+		interface e1/0
+		 description "Link to core switch SW1"
+		 ip address 172.16.0.$((POP+224)) 255.255.255.240
+		 ip ospf 1 area 0.0.0.0
+		 ip ospf message-digest-key 1 md5 "R04d5how-C0RE"
+		 no shutdown
+		!
+		interface e1/1
+		 description "Link to core switch SW2"
+		 ip address 172.16.0.$((POP+240)) 255.255.255.240
+		 ip ospf 1 area 0.0.0.0
+		 ip ospf message-digest-key 1 md5 "R04d5how-C0RE"
+		 no shutdown
+		!
+		router ospf 1
+		 area 0.0.0.0 authentication message-digest
+		 area ${POP}.0.0.0 nssa default-information-originate no-summary
+		 no passive-interface e1/0
+		 no passive-interface e1/1
+		!
+		ip route 172.16.0.0 255.240.0.0 Null 0
+		!
+		router bgp 65530
+		 address-family ipv4
+		  network 172.16.0.0 mask 255.240.0.0
+		  aggregate-address 172.2${POP}.0.0 255.255.0.0 summary-only
+		  neighbor POP${POP}-iBGP-IPv4 route-reflector-client
+		  neighbor 172.16.${POP}.1 peer-group POP${POP}-iBGP-IPv4
+		  neighbor 172.16.${POP}.3 peer-group POP${POP}-iBGP-IPv4
+		  neighbor Core-iBGP-IPv4 peer-group
+		  neighbor Core-iBGP-IPv4 remote-as 65530
+		  neighbor Core-iBGP-IPv4 update-source Loopback0
+	EOF
 
 	for OTHER_POP in `seq 1 ${POP_COUNT}`; do
 		if [ "${POP}" != "${OTHER_POP}" ]; then
-			echo "  neighbor 10.${OTHER_POP}.0.2 peer-group Core-iBGP-IPv4" >> ${DIR}/${CFG}
+			echo "  neighbor 172.16.${OTHER_POP}.2 peer-group Core-iBGP-IPv4" >> ${DIR}/${CFG}
 		fi
 	done
 
-	cat >> ${DIR}/${CFG} <<EOF
- !
-!
-EOF
+	cat >> ${DIR}/${CFG} <<-EOF
+		 !
+		!
+	EOF
 
 	CFG="POP${POP}-R3.cfg"
 	echo -n " ${CFG}"
-	cat >> ${DIR}/${CFG} <<EOF
-interface f0/0
- description "Link to POP${POP}-R2"
- ip address 10.${POP}.1.6 255.255.255.252
- no shutdown
-!
-interface f0/1
- description "Link to POP${POP}-R1"
- ip address 10.${POP}.1.9 255.255.255.252
- no shutdown
-!
-router bgp 65530
- address-family ipv4
-  neighbor 10.${POP}.0.1 peer-group POP${POP}-iBGP-IPv4
-  neighbor 10.${POP}.0.2 peer-group POP${POP}-iBGP-IPv4
-!
-EOF
+	cat >> ${DIR}/${CFG} <<-EOF
+		interface f0/0
+		 description "Link to POP${POP}-R2"
+		 ip address 172.16.1${POP}.6 255.255.255.252
+		 no shutdown
+		!
+		interface f0/1
+		 description "Link to POP${POP}-R1"
+		 ip address 172.16.1${POP}.9 255.255.255.252
+		 no shutdown
+		!
+		interface e1/0
+		 description "Link to POP${POP}-CUST2"
+		 ip address 172.16.2${POP}.5 255.255.255.252
+		 no cdp enable
+		 no shutdown
+		!
+		ip prefix-list POP${POP}-CUST2-IN permit 172.2${POP}.2.0/24
+		ip prefix-list POP${POP}-CUST2-OUT permit 0.0.0.0/0 le 32
+		!
+		router bgp 65530
+		 address-family ipv4
+		  neighbor 172.16.${POP}.1 peer-group POP${POP}-iBGP-IPv4
+		  neighbor 172.16.${POP}.2 peer-group POP${POP}-iBGP-IPv4
+		  neighbor 172.16.2${POP}.6 remote-as 650${POP}2
+		  neighbor 172.16.2${POP}.6 description "BGP customer POP${POP}-CUST2"
+		  neighbor 172.16.2${POP}.6 password "Cu5t0m3r"
+		  neighbor 172.16.2${POP}.6 prefix-list POP${POP}-CUST2-IN in
+		  neighbor 172.16.2${POP}.6 prefix-list POP${POP}-CUST2-OUT out
+		  neighbor 172.16.2${POP}.6 activate
+		!
+	EOF
 
+	echo ""
+
+	echo -n "  - Customer configuration:"
+	for CUSTOMER in `seq 1 2`; do
+		TPL="templates/v4only/pop-customer.cfg"
+		CFG="POP${POP}-CUST${CUSTOMER}.cfg"
+		echo -n " ${CFG}"
+		
+		# Start with the template
+		(IFS=""; while read -r line; do eval echo "\\${line}"; done; ) < ${TPL} > ${DIR}/${CFG}
+	done
+	echo ""
+	
+	echo -n "  - Customizing configuration per customer:"
+	
+	CFG="POP${POP}-CUST1.cfg"
+	echo -n " ${CFG}"
+	cat >> ${DIR}/${CFG} <<-EOF
+		interface f0/0
+		 ip address 172.16.2${POP}.2 255.255.255.252
+		 no shutdown
+		!
+		ip route 0.0.0.0 0.0.0.0 172.16.2${POP}.1
+		!
+	EOF
+
+	CFG="POP${POP}-CUST2.cfg"
+	echo -n " ${CFG}"
+	cat >> ${DIR}/${CFG} <<-EOF
+		interface f0/0
+		 ip address 172.16.2${POP}.6 255.255.255.252
+		 no shutdown
+		!
+		router bgp 650${POP}2
+		 bgp router-id 172.2${POP}.2.1
+		 bgp log-neighbor-changes
+		 address-family ipv4
+		  no auto-summary
+		  no synchronization
+		  network 172.2${POP}.2.0 mask 255.255.255.0
+		  neighbor 172.16.2${POP}.5 remote-as 65530
+		  neighbor 172.16.2${POP}.5 description "BGP ISP POP${POP}-R2"
+		  neighbor 172.16.2${POP}.5 password "Cu5t0m3r"
+		  neighbor 172.16.2${POP}.5 activate
+		!
+	EOF
+	
 	echo ""
 done
 

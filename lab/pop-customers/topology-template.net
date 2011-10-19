@@ -15,7 +15,6 @@ ghostios = True
 		console = 2${POP}010
 		aux = 1${POP}011
 		slot0 = C7200-IO-2FE
-		slot1 = PA-4E
 		f0/0 = nio_udp:1${POP}310:127.0.0.1:1${POP}210
 	
 	[[ROUTER POP${POP}-CUST2]]
@@ -23,5 +22,4 @@ ghostios = True
 		console = 2${POP}020
 		aux = 1${POP}021
 		slot0 = C7200-IO-2FE
-		slot1 = PA-4E
 		f0/0 = nio_udp:1${POP}330:127.0.0.1:1${POP}230
