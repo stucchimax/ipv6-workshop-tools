@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Settings
+SLEEP_TIME=30
+
 # Go to my own directory
 MY_DIR=$(dirname "$0")
 cd "${MY_DIR}"
@@ -20,23 +23,56 @@ fi
 POP_COUNT="$1"
 
 # Generate configs
-./cfg-generator/generate-v4only "${POP_COUNT}"
+./cfg-generator/generate v4 "${POP_COUNT}"
+./cfg-generator/generate v6 "${POP_COUNT}"
+./cfg-generator/generate dual "${POP_COUNT}"
 
 echo "-------------------------------------"
 echo "- Starting lab sections with ${POP_COUNT} POPs -"
 echo "-------------------------------------"
 
-osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/core-switches/run; exit\"" &> /dev/null
-osascript -e "tell application \"Terminal\" to tell its front window to tell its selected tab to set its custom title to \"Core-Switches\""
+# Get screen dimensions
+DESKTOP_WIDTH=$(osascript -e "tell application \"Finder\" to set _b to bounds of window of desktop" -e "get item 3 of _b")
+DESKTOP_HEIGHT=$(osascript -e "tell application \"Finder\" to set _b to bounds of window of desktop" -e "get item 4 of _b")
+
+MARGIN_LEFT=42
+MARGIN_TOP=22
+MARGIN_RIGHT=0
+MARGIN_BOTTOM=0
+
+WINDOW_WIDTH=$(( (${DESKTOP_WIDTH} - ${MARGIN_LEFT} - ${MARGIN_RIGHT}) / 2 ))
+WINDOW_HEIGHT=$(( (${DESKTOP_HEIGHT} - ${MARGIN_TOP} - ${MARGIN_BOTTOM}) / (${POP_COUNT} + 1) ))
+
+# Move this window to top left
+osascript -e "tell application\"Terminal\" to set the bounds of its front window to {${MARGIN_LEFT}, ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
+
+# Start Core Switches
+WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/core-switches/run; exit\"" | cut -d ' ' -f 6)
+osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"Core-Switches\""
+
+# Move this window to top right
+osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
 
 for POP in `seq 1 ${POP_COUNT}`; do
-	osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-routers/run ${POP}; exit\"" &> /dev/null
-	osascript -e "tell application \"Terminal\" to tell its front window to tell its selected tab to set its custom title to \"POP${POP} Routers\""
+	# Give Dynamips some time, otherwise we get ghost file errors
+	sleep ${SLEEP_TIME}
 	
-	sleep 5
+	# Start the POP Routers
+	WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-routers/run ${POP}; exit\"" | cut -d ' ' -f 6)
+	osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"POP${POP} Routers\""
 
-	osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-customers/run ${POP}; exit\"" &> /dev/null
-	osascript -e "tell application \"Terminal\" to tell its front window to tell its selected tab to set its custom title to \"POP${POP} Customers\""
+	# Move this window to the left
+	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {${MARGIN_LEFT}, $(( ${MARGIN_TOP} + ${POP} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${POP}+1) * ${WINDOW_HEIGHT} ))}"
 	
-	sleep 5
+	# Give Dynamips some time, otherwise we get ghost file errors
+	sleep ${SLEEP_TIME}
+
+	# Start the POP Customers
+	WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-customers/run ${POP}; exit\"" | cut -d ' ' -f 6)
+	osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"POP${POP} Customers\""
+	
+	# Move this window to the right
+	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + ${POP} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${POP}+1) * ${WINDOW_HEIGHT} ))}"
 done
+
+top -o -cpu

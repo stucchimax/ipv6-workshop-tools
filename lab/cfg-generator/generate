@@ -1,0 +1,159 @@
+#!/bin/bash
+
+# Go to my own directory
+MY_DIR=$(dirname "$0")
+cd "${MY_DIR}"
+MY_DIR=$(pwd -P)
+
+# Check command line
+if [[ ("$1" != "v4" && "$1" != "v6" && "$1" != "dual") || ("$2" != [1-9]) ]]; then
+	echo "---------"
+	echo "- Usage -"
+	echo "---------"
+	echo "$0 <mode> <POP-count>"
+	echo ""
+	echo "Where <mode> is 'v4', 'v6' or 'dual'"
+	echo "Where <POP-count> is a number from 1 to 9"
+	echo ""
+	exit 1
+fi
+
+MODE="$1"
+POP_COUNT="$2"
+
+echo "----------------------------------------"
+echo "- Generating configurations for ${POP_COUNT} POPs -"
+echo "----------------------------------------"
+
+function set_possible_matches() {
+	local POP="$1"
+	local POP_ID="POP${POP}"
+	local ROUTER_ID="$2"
+	
+	# Determine filter conditions
+	POSSIBLE_MATCHES=("${POP_ID}" "${POP_ID}-${ROUTER_ID}" "${ROUTER_ID}")
+	for OTHER_POP in `seq 1 ${POP_COUNT}`; do
+		if [[ "${OTHER_POP}" == "${POP}" ]]; then
+			continue
+		fi
+		POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS" "${ROUTER_ID}-POP${OTHER_POP}EXISTS")
+	done
+	if [[ "${MODE}" == "v4" || "${MODE}" == "dual" ]]; then
+		POSSIBLE_MATCHES+=("v4" "${POP_ID}-v4" "${POP_ID}-${ROUTER_ID}-v4" "${ROUTER_ID}-v4")
+		for OTHER_POP in `seq 1 ${POP_COUNT}`; do
+			if [[ "${OTHER_POP}" == "${POP}" ]]; then
+				continue
+			fi
+			POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS-v4" "${ROUTER_ID}-POP${OTHER_POP}EXISTS-v4")
+		done
+	fi
+	if [[ "${MODE}" == "v6" || "${MODE}" == "dual" ]]; then
+		POSSIBLE_MATCHES+=("v6" "${POP_ID}-v6" "${POP_ID}-${ROUTER_ID}-v6" "${ROUTER_ID}-v6")
+		for OTHER_POP in `seq 1 ${POP_COUNT}`; do
+			if [[ "${OTHER_POP}" == "${POP}" ]]; then
+				continue
+			fi
+			POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS-v6" "${ROUTER_ID}-POP${OTHER_POP}EXISTS-v6")
+		done
+	fi
+	if [[ "${MODE}" == "dual" ]]; then
+		POSSIBLE_MATCHES+=("dual" "${POP_ID}-dual" "${POP_ID}-${ROUTER_ID}-dual" "${ROUTER_ID}-dual")
+		for OTHER_POP in `seq 1 ${POP_COUNT}`; do
+			if [[ "${OTHER_POP}" == "${POP}" ]]; then
+				continue
+			fi
+			POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS-dual" "${ROUTER_ID}-POP${OTHER_POP}EXISTS-dual")
+		done
+	fi
+}
+
+function process_template() {
+	local TEMPLATE="$1"
+	local OUTPUT="$2"
+	
+	# Start with the template
+	local SKIPPING=0
+	(IFS=""; while read -r line; do
+		if [[ "${line}" =~ ^[[:blank:]]*$ ]]; then
+			# Skip empty lines
+			continue
+		elif [[ "${line}" =~ ^(.*)[[:blank:]]*![[:blank:]]*ONLY\ (.*)[[:blank:]]*$ ]]; then
+			local WE_MATCH=0
+			line="${BASH_REMATCH[1]}"
+			for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
+				if [[ "${BASH_REMATCH[2]}" == "${POSSIBLE_MATCH}" ]]; then
+					WE_MATCH=1
+					break
+				fi
+			done
+			if [[ $WE_MATCH -eq 0 ]]; then
+				# Skip line
+				continue
+			fi
+		elif [[ "${line}" =~ ^[[:blank:]]*--END--[[:blank:]]*$ ]]; then
+			# Stop skipping
+			SKIPPING=0
+			continue
+		elif [[ "${line}" =~ ^[[:blank:]]*--ONLY\ (.*)--[[:blank:]]*$ ]]; then
+			WE_MATCH=0
+			for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
+				if [[ "${BASH_REMATCH[1]}" == "${POSSIBLE_MATCH}" ]]; then
+					WE_MATCH=1
+					break
+				fi
+			done
+			if [[ $WE_MATCH -eq 0 ]]; then
+				# Start skipping
+				SKIPPING=1
+			fi
+			continue
+		fi
+		
+		if [[ $SKIPPING -eq 0 ]]; then
+			eval echo "\\${line}"
+		fi
+	done; ) < ${TEMPLATE} > ${OUTPUT}
+}
+
+DIR="../working/cfg-${MODE}"
+echo "Writing to ${DIR}"
+mkdir -p ${DIR}
+rm -f ../${DIR}/*.cfg
+
+echo -n "- Basic configuration:"
+for SWITCH in `seq 1 2`; do
+	TPL="templates/core-switch.cfg"
+	CFG="SW${SWITCH}.cfg"
+	echo -n " ${CFG}"
+
+	set_possible_matches "X" "SW${SWITCH}"
+	process_template "${TPL}" "${DIR}/${CFG}"
+done
+echo ""
+
+for POP in `seq 1 ${POP_COUNT}`; do
+	echo "- POP ${POP}:"
+	echo -n "  - Basic configuration:"
+	for ROUTER in `seq 1 3`; do
+		TPL="templates/pop-router.cfg"
+		CFG="POP${POP}-R${ROUTER}.cfg"
+		echo -n " ${CFG}"
+		
+		set_possible_matches "${POP}" "R${ROUTER}"
+		process_template "${TPL}" "${DIR}/${CFG}"
+	done
+	echo ""
+
+	echo -n "  - Customer configuration:"
+	for CUSTOMER in `seq 1 2`; do
+		TPL="templates/pop-customer.cfg"
+		CFG="POP${POP}-CUST${CUSTOMER}.cfg"
+		echo -n " ${CFG}"
+		
+		set_possible_matches "${POP}" "CUST${CUSTOMER}"
+		process_template "${TPL}" "${DIR}/${CFG}"
+	done
+	echo ""
+done
+
+echo ""
