@@ -1,4 +1,4 @@
-autostart = True
+autostart = False
 ghostios = True
 
 [localhost:${DYNAMIPS_PORT}]

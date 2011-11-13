@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Settings
-SLEEP_TIME=30
+SLEEP_TIME=10
 
 # Go to my own directory
 MY_DIR=$(dirname "$0")
@@ -75,4 +75,4 @@ for POP in `seq 1 ${POP_COUNT}`; do
 	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + ${POP} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${POP}+1) * ${WINDOW_HEIGHT} ))}"
 done
 
-top -o -cpu
+top -u
