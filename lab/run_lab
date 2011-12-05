@@ -10,12 +10,16 @@ MY_DIR=$(pwd -P)
 
 # Check command line
 if [[ "$1" != [1-9] ]]; then
-	echo "---------"
-	echo "- Usage -"
-	echo "---------"
-	echo "$0 <POP-count>"
+	echo "======================="
+	echo "|| IPv6 LAB Generator ||"
+	echo "======================="
+    echo "Usage:"
+	echo -e "\t$0 <POP-count>"
 	echo ""
 	echo "Where <POP-count> is a number from 1 to 9"
+    echo ""
+    echo -e "\tWhen the LAB is completely done you can remove the 'working' directory"
+    echo -e "\tto get rid of all configurations"
 	echo ""
 	exit 1
 fi
