@@ -129,6 +129,15 @@ for SWITCH in `seq 1 2`; do
 	set_possible_matches "X" "SW${SWITCH}"
 	process_template "${TPL}" "${DIR}/${CFG}"
 done
+
+for UPSTREAM in `seq 1 2`; do
+	TPL="templates/upstream-router.cfg"
+	CFG="UPSTREAM${UPSTREAM}.cfg"
+	echo -n " ${CFG}"
+
+	set_possible_matches "X" "UPSTREAM${UPSTREAM}"
+	process_template "${TPL}" "${DIR}/${CFG}"
+done
 echo ""
 
 for POP in `seq 1 ${POP_COUNT}`; do

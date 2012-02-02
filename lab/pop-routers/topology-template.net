@@ -30,6 +30,8 @@ ghostios = True
 		f0/1 = POP${POP}-R3 f0/0
 		e1/0 = nio_udp:1021${POP}:127.0.0.1:1011${POP}
 		e1/1 = nio_udp:1022${POP}:127.0.0.1:1012${POP}
+		e1/2 = nio_udp:3021${POP}:127.0.0.1:3011${POP}
+		e1/3 = nio_udp:3022${POP}:127.0.0.1:3012${POP}
 	
 	[[ROUTER POP${POP}-R3]]
 		model = 7200

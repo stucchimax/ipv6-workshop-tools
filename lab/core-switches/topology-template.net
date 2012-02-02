@@ -12,6 +12,7 @@ ghostios = True
 	
 	[[ROUTER SW1]]
 		model = 3725
+		cnfg = cfg-dual/SW1.cfg
 		console = 10010
 		aux = 10011
 		slot1 = NM-16ESW
@@ -28,6 +29,7 @@ ghostios = True
 	
 	[[ROUTER SW2]]
 		model = 3725
+		cnfg = cfg-dual/SW2.cfg
 		console = 10020
 		aux = 10021
 		slot1 = NM-16ESW

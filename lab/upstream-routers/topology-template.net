@@ -1,0 +1,49 @@
+autostart = True
+ghostios = True
+
+[localhost:7100]
+	workingdir = .
+	udp = 40200
+	
+	[[7200]]
+		image = ../images/${C7200_IMAGE}
+		idlepc = ${C7200_IDLEPC}
+		ram = ${C7200_RAM}
+	
+	[[ROUTER UPSTREAM1]]
+		model = 7200
+		cnfg = cfg-dual/UPSTREAM1.cfg
+		console = 31020
+		aux = 31021
+		slot0 = C7200-IO-2FE
+		slot1 = PA-4E
+		slot2 = PA-4E
+#		f0/0 = some native interface
+		f0/1 = nio_udp:30111:127.0.0.1:30211
+		e1/0 = nio_udp:30112:127.0.0.1:30212
+		e1/1 = nio_udp:30113:127.0.0.1:30213
+		e1/2 = nio_udp:30114:127.0.0.1:30214
+		e1/3 = nio_udp:30115:127.0.0.1:30215
+		e2/0 = nio_udp:30116:127.0.0.1:30216
+		e2/1 = nio_udp:30117:127.0.0.1:30217
+		e2/2 = nio_udp:30118:127.0.0.1:30218
+		e2/3 = nio_udp:30119:127.0.0.1:30219
+	
+	[[ROUTER UPSTREAM2]]
+		model = 7200
+		cnfg = cfg-dual/UPSTREAM2.cfg
+		console = 32020
+		aux = 32021
+		slot0 = C7200-IO-2FE
+		slot1 = PA-4E
+		slot2 = PA-4E
+#		f0/0 = some native interface
+		f0/1 = nio_udp:30121:127.0.0.1:30221
+		e1/0 = nio_udp:30122:127.0.0.1:30222
+		e1/1 = nio_udp:30123:127.0.0.1:30223
+		e1/2 = nio_udp:30124:127.0.0.1:30224
+		e1/3 = nio_udp:30125:127.0.0.1:30225
+		e2/0 = nio_udp:30126:127.0.0.1:30226
+		e2/1 = nio_udp:30127:127.0.0.1:30227
+		e2/2 = nio_udp:30128:127.0.0.1:30228
+		e2/3 = nio_udp:30129:127.0.0.1:30229

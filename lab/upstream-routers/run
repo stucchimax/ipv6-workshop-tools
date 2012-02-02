@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Go to my own directory
+MY_DIR=$(dirname "$0")
+cd "${MY_DIR}"
+MY_DIR=$(pwd -P)
+
+# Load image settings
+source ../settings/images
+
+echo "---------------------------------------------"
+echo "- Starting Dynamips Hypervisor on port 7100 -"
+echo "---------------------------------------------"
+
+mkdir -p ../working
+cd ../working
+../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H 7100 --filepid dynamips-7100.pid &> dynamips-7100.out &
+cd "${MY_DIR}"
+
+sleep 1
+
+echo -n "PID: "
+cat ../working/dynamips-7100.pid
+echo ""
+
+echo ""
+echo "---------------------------------------------------------"
+echo "- Generating Dynagen configuration for upstream routers -"
+echo "---------------------------------------------------------"
+
+sed -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
+    -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
+    -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
+    < topology-template.net \
+    > ../working/upstream-routers.net
+
+echo ""
+echo "-------------------------------------------------------"
+echo "- Starting Dynagen with upstream router configuration -"
+echo "-------------------------------------------------------"
+
+../bin/dynagen/dynagen ../working/upstream-routers.net
+
+echo ""
+echo "---------------------------------------------"
+echo "- Stopping Dynamips Hypervisor on port 7100 -"
+echo "---------------------------------------------"
+
+kill `cat ../working/dynamips-7100.pid`
+
+echo -n "Killed PID: "
+cat ../working/dynamips-7100.pid
+echo ""
+
+rm -f ../working/dynamips-7100.pid
+
+echo ""
