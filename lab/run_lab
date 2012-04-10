@@ -1,7 +1,23 @@
 #!/bin/bash
 
-# Settings
-SLEEP_TIME=10
+# Calculate the margind
+MARGIN_TOP=22
+MARGIN_LEFT=0
+MARGIN_RIGHT=0
+MARGIN_BOTTOM=0
+
+DOCK_ORIENTATION="$(defaults read com.apple.dock orientation)"
+DOCK_SIZE="$(defaults read com.apple.dock largesize)"
+DOCK_SIZE=${DOCK_SIZE/.*}
+DOCK_SIZE=$((DOCK_SIZE+2))
+
+if [ "${DOCK_ORIENTATION}" = "left" ]; then
+	MARGIN_LEFT="${DOCK_SIZE}"
+elif [ "${DOCK_ORIENTATION}" = "right" ]; then
+	MARGIN_RIGHT="${DOCK_SIZE}"
+else
+	MARGIN_BOTTOM="${DOCK_SIZE}"
+fi
 
 # Go to my own directory
 MY_DIR=$(dirname "$0")
@@ -9,14 +25,15 @@ cd "${MY_DIR}"
 MY_DIR=$(pwd -P)
 
 # Check command line
-if [[ "$1" != [1-9] ]]; then
-	echo "======================="
+if [[ "$1" != [1-9] || "$2" != [1-2] ]]; then
+	echo "========================"
 	echo "|| IPv6 LAB Generator ||"
-	echo "======================="
+	echo "========================"
 	echo "Usage:"
-	echo -e "\t$0 <POP-count>"
+	echo -e "\t$0 <POP-count> <Server-nr>"
 	echo ""
 	echo "Where <POP-count> is a number from 1 to 9"
+	echo "Where <Server-nr> is either 1 or 2"
 	echo ""
 	echo -e "\tWhen the LAB is completely done you can remove the 'working' directory"
 	echo -e "\tto get rid of all configurations"
@@ -25,6 +42,21 @@ if [[ "$1" != [1-9] ]]; then
 fi
 
 POP_COUNT="$1"
+SERVER_NR="$2"
+
+# Calculate number of POPs
+# in case of an odd number of POPs Server 1 gets one extra
+if [ "${SERVER_NR}" -eq "1" ]; then
+	# This rounds up
+	LOCAL_POP_COUNT=$(( (${POP_COUNT} + 1) / 2 ))
+else
+	# This rounds down
+	LOCAL_POP_COUNT=$(( ${POP_COUNT} / 2 ))
+fi
+
+# We show two POPs side by side
+# This rounds up
+POP_ROWS=$(( (${LOCAL_POP_COUNT} + 1) / 2 ))
 
 # Generate configs
 ./cfg-generator/generate v4 "${POP_COUNT}"
@@ -33,58 +65,61 @@ POP_COUNT="$1"
 
 echo "-------------------------------------"
 echo "- Starting lab sections with ${POP_COUNT} POPs -"
+echo "- Local server runs ${LOCAL_POP_COUNT} POPs          -"
 echo "-------------------------------------"
 
 # Get screen dimensions
 DESKTOP_WIDTH=$(osascript -e "tell application \"Finder\" to set _b to bounds of window of desktop" -e "get item 3 of _b")
 DESKTOP_HEIGHT=$(osascript -e "tell application \"Finder\" to set _b to bounds of window of desktop" -e "get item 4 of _b")
 
-MARGIN_LEFT=42
-MARGIN_TOP=22
-MARGIN_RIGHT=0
-MARGIN_BOTTOM=0
-
 WINDOW_WIDTH=$(( (${DESKTOP_WIDTH} - ${MARGIN_LEFT} - ${MARGIN_RIGHT}) / 2 ))
 WINDOW_WIDTH_NARROW=$(( (${DESKTOP_WIDTH} - ${MARGIN_LEFT} - ${MARGIN_RIGHT}) / 3 ))
-WINDOW_HEIGHT=$(( (${DESKTOP_HEIGHT} - ${MARGIN_TOP} - ${MARGIN_BOTTOM}) / (${POP_COUNT} + 1) ))
+WINDOW_HEIGHT=$(( (${DESKTOP_HEIGHT} - ${MARGIN_TOP} - ${MARGIN_BOTTOM}) / (${POP_ROWS} + 1) ))
 
 # Move this window to top left
 osascript -e "tell application\"Terminal\" to set the bounds of its front window to {${MARGIN_LEFT}, ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
 
 # Start Core Switches
-WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/core-switches/run; exit\"" | cut -d ' ' -f 6)
+WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/core-switches/run ${SERVER_NR}; exit\"" | cut -d ' ' -f 6)
 osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"Core-Switches\""
 
 # Move this window to top right
 osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH_NARROW} )), ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
 
-# Start Upstream Routers
-WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/upstream-routers/run; exit\"" | cut -d ' ' -f 6)
-osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"Upstream-Routers\""
+# Start Transit Routers
+WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/transit-routers/run ${SERVER_NR}; exit\"" | cut -d ' ' -f 6)
+osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"Transit-Routers\""
 
 # Move this window to top right
 osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH_NARROW} )), ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + 3 * ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
 
+PLACEMENT="left"
+ROW=1
 for POP in `seq 1 ${POP_COUNT}`; do
-	# Give Dynamips some time, otherwise we get ghost file errors
-	sleep ${SLEEP_TIME}
+	# Skip if this one should not run on this server
+	if [ $(( ((${POP} -1 ) % 2) + 1 )) -ne ${SERVER_NR} ]; then
+		echo "Skipping POP ${POP}"
+		continue
+	else
+		echo "Starting POP ${POP}"
+	fi
 	
 	# Start the POP Routers
 	WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-routers/run ${POP}; exit\"" | cut -d ' ' -f 6)
 	osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"POP${POP} Routers\""
 
-	# Move this window to the left
-	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {${MARGIN_LEFT}, $(( ${MARGIN_TOP} + ${POP} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${POP}+1) * ${WINDOW_HEIGHT} ))}"
-	
-	# Give Dynamips some time, otherwise we get ghost file errors
-	sleep ${SLEEP_TIME}
-
-	# Start the POP Customers
-	WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/pop-customers/run ${POP}; exit\"" | cut -d ' ' -f 6)
-	osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"POP${POP} Customers\""
-	
-	# Move this window to the right
-	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + ${POP} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${POP}+1) * ${WINDOW_HEIGHT} ))}"
+	if [ "${PLACEMENT}" = "left" ]; then
+		# Move this window to the left
+		osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {${MARGIN_LEFT}, $(( ${MARGIN_TOP} + ${ROW} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${ROW}+1) * ${WINDOW_HEIGHT} ))}"
+		
+		PLACEMENT="right"
+	else
+		# Move this window to the right
+		osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + ${ROW} * ${WINDOW_HEIGHT} )), $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH} )), $(( ${MARGIN_TOP} + (${ROW}+1) * ${WINDOW_HEIGHT} ))}"
+		
+		PLACEMENT="left"
+		ROW=$((ROW+1))
+	fi
 done
 
-top -u
+#top -u

@@ -8,21 +8,21 @@ MY_DIR=$(pwd -P)
 # Load image settings
 source ../settings/images
 
-# Check command line arguments
-if [[ "$1" != [1-9] ]]; then
-	echo "---------"
-	echo "- Usage -"
-	echo "---------"
-	echo "$0 <POP-id>"
-	echo ""
-	echo "Where <POP-id> is a number from 1 to 9"
-	echo ""
+# Check command line
+if [[ "$1" != [1-2] ]]; then
+        echo "======================"
+        echo "|| IPv6 Core Switch ||"
+        echo "======================"
+        echo "Usage:"
+        echo -e "\t$0 <Server-nr>"
+        echo ""
+        echo "Where <Server-nr> is either 1 or 2"
 	exit 1
 fi
 
-POP="$1"
-DIR="../working/POP${POP}"
-DYNAMIPS_PORT=$[ 7020 + ${POP} ];
+TRANSIT="$1"
+DIR="../working/TRANSIT${TRANSIT}"
+DYNAMIPS_PORT=$((7010 + ${TRANSIT}))
 
 echo "---------------------------------------------"
 echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
@@ -40,24 +40,24 @@ cat "${DIR}/dynamips.pid"
 echo ""
 
 echo ""
-echo "----------------------------------------------"
-echo "- Generating Dynagen configuration for POP ${POP} -"
-echo "----------------------------------------------"
+echo "--------------------------------------------------------"
+echo "- Generating Dynagen configuration for transit routers -"
+echo "--------------------------------------------------------"
 
-sed -e "s/\${POP}/${POP}/g" \
-    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
-    -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
+sed -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
     -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
     -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
+    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
+    -e "s/\${TRANSIT}/${TRANSIT}/g" \
     < topology-template.net \
-    > "${DIR}/pop-routers.net"
+    > "${DIR}/transit-router.net"
 
 echo ""
-echo "----------------------------------------------------"
-echo "- Starting Dynagen with POP ${POP} router configuration -"
-echo "----------------------------------------------------"
+echo "------------------------------------------------------"
+echo "- Starting Dynagen with transit router configuration -"
+echo "------------------------------------------------------"
 
-../bin/dynagen/dynagen "${DIR}/pop-routers.net"
+../bin/dynagen/dynagen "${DIR}/transit-router.net"
 
 echo ""
 echo "---------------------------------------------"

@@ -8,19 +8,35 @@ MY_DIR=$(pwd -P)
 # Load image settings
 source ../settings/images
 
+# Check command line
+if [[ "$1" != [1-2] ]]; then
+        echo "======================"
+        echo "|| IPv6 Core Switch ||"
+        echo "======================"
+        echo "Usage:"
+        echo -e "\t$0 <Server-nr>"
+        echo ""
+        echo "Where <Server-nr> is either 1 or 2"
+	exit 1
+fi
+
+SWITCH="$1"
+DIR="../working/SW${SWITCH}"
+DYNAMIPS_PORT=$((7000 + ${SWITCH}))
+
 echo "---------------------------------------------"
-echo "- Starting Dynamips Hypervisor on port 7000 -"
+echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
 echo "---------------------------------------------"
 
-mkdir -p ../working
-cd ../working
-../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H 7000 --filepid dynamips-7000.pid &> dynamips-7000.out &
+mkdir -p "${DIR}"
+cd "${DIR}"
+../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
 cd "${MY_DIR}"
 
 sleep 1
 
 echo -n "PID: "
-cat ../working/dynamips-7000.pid
+cat "${DIR}/dynamips.pid"
 echo ""
 
 echo ""
@@ -31,27 +47,29 @@ echo "------------------------------------------------------"
 sed -e "s/\${C3725_IMAGE}/${C3725_IMAGE}/g" \
     -e "s/\${C3725_IDLEPC}/${C3725_IDLEPC}/g" \
     -e "s/\${C3725_RAM}/${C3725_RAM}/g" \
+    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
+    -e "s/\${SWITCH}/${SWITCH}/g" \
     < topology-template.net \
-    > ../working/core-switches.net
+    > "${DIR}/core-switch.net"
 
 echo ""
 echo "---------------------------------------------------"
 echo "- Starting Dynagen with core switch configuration -"
 echo "---------------------------------------------------"
 
-../bin/dynagen/dynagen ../working/core-switches.net
+../bin/dynagen/dynagen "${DIR}/core-switch.net"
 
 echo ""
 echo "---------------------------------------------"
-echo "- Stopping Dynamips Hypervisor on port 7000 -"
+echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
 echo "---------------------------------------------"
 
-kill `cat ../working/dynamips-7000.pid`
+kill `cat "${DIR}/dynamips.pid"`
 
 echo -n "Killed PID: "
-cat ../working/dynamips-7000.pid
+cat "${DIR}/dynamips.pid"
 echo ""
 
-rm -f ../working/dynamips-7000.pid
+rm -f "${DIR}/dynamips.pid"
 
 echo ""
