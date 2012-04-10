@@ -164,7 +164,7 @@ for POP in `seq 1 ${POP_COUNT}`; do
 	for CUSTOMER in `seq 1 2`; do
 		TPL="templates/pop-customer.cfg"
 		CFG="CUST${CUSTOMER}.cfg"
-		echo -n " ${POP}:${CFG}"
+		echo -n " POP${POP}:${CFG}"
 		
 		set_possible_matches "${POP}" "CUST${CUSTOMER}"
 		process_template "${TPL}" "${DIR}/${CFG}"

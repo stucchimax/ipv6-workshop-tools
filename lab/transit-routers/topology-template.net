@@ -3,7 +3,7 @@ ghostios = True
 
 [localhost:${DYNAMIPS_PORT}]
 	workingdir = .
-	udp = 40${SWITCH}00
+	udp = 40${TRANSIT}00
 	
 	[[7200]]
 		image = ../../images/${C7200_IMAGE}

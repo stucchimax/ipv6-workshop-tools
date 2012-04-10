@@ -10,49 +10,49 @@ ghostios = True
 		idlepc = ${C7200_IDLEPC}
 		ram = ${C7200_RAM}
 	
-	[[ROUTER POP${POP}-R1]]
+	[[ROUTER R1]]
 		model = 7200
 		console = 1${POP}010
 		aux = 1${POP}011
 		slot0 = C7200-IO-2FE
 		slot1 = PA-4E
-		f0/0 = POP${POP}-R3 f0/1
-		f0/1 = POP${POP}-R2 f0/0
-		e1/0 = POP${POP}-CUST1 f0/0
+		f0/0 = R3 f0/1
+		f0/1 = R2 f0/0
+		e1/0 = CUST1 f0/0
 	
-	[[ROUTER POP${POP}-R2]]
+	[[ROUTER R2]]
 		model = 7200
 		console = 1${POP}020
 		aux = 1${POP}021
 		slot0 = C7200-IO-2FE
 		slot1 = PA-4E
-		f0/0 = POP${POP}-R1 f0/1
-		f0/1 = POP${POP}-R3 f0/0
+		f0/0 = R1 f0/1
+		f0/1 = R3 f0/0
 		e1/0 = nio_udp:1021${POP}:192.168.88.10:1011${POP}
 		e1/1 = nio_udp:1022${POP}:192.168.88.20:1012${POP}
 		e1/2 = nio_udp:3021${POP}:192.168.88.10:3011${POP}
 		e1/3 = nio_udp:3022${POP}:192.168.88.20:3012${POP}
 	
-	[[ROUTER POP${POP}-R3]]
+	[[ROUTER R3]]
 		model = 7200
 		console = 1${POP}030
 		aux = 1${POP}031
 		slot0 = C7200-IO-2FE
 		slot1 = PA-4E
-		f0/0 = POP${POP}-R2 f0/1
-		f0/1 = POP${POP}-R1 f0/0
-		e1/0 = POP${POP}-CUST2 f0/0
+		f0/0 = R2 f0/1
+		f0/1 = R1 f0/0
+		e1/0 = CUST2 f0/0
 
-	[[ROUTER POP${POP}-CUST1]]
+	[[ROUTER CUST1]]
 		model = 7200
 		console = 2${POP}010
 		aux = 1${POP}011
 		slot0 = C7200-IO-2FE
-		f0/0 = POP${POP}-R1 e1/0
+		f0/0 = R1 e1/0
 
-	[[ROUTER POP${POP}-CUST2]]
+	[[ROUTER CUST2]]
 		model = 7200
 		console = 2${POP}020
 		aux = 1${POP}021
 		slot0 = C7200-IO-2FE
-		f0/0 = POP${POP}-R3 e1/0
+		f0/0 = R3 e1/0

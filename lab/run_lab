@@ -6,10 +6,10 @@ MARGIN_LEFT=0
 MARGIN_RIGHT=0
 MARGIN_BOTTOM=0
 
-DOCK_ORIENTATION="$(defaults read com.apple.dock orientation)"
-DOCK_SIZE="$(defaults read com.apple.dock largesize)"
+DOCK_ORIENTATION="$(defaults read com.apple.dock orientation 2>/dev/null)"
+DOCK_SIZE="$(defaults read com.apple.dock tilesize)"
 DOCK_SIZE=${DOCK_SIZE/.*}
-DOCK_SIZE=$((DOCK_SIZE+2))
+DOCK_SIZE=$((DOCK_SIZE+20))
 
 if [ "${DOCK_ORIENTATION}" = "left" ]; then
 	MARGIN_LEFT="${DOCK_SIZE}"
