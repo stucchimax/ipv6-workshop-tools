@@ -28,10 +28,10 @@ ghostios = True
 		slot1 = PA-4E
 		f0/0 = R1 f0/1
 		f0/1 = R3 f0/0
-		e1/0 = nio_udp:1021${POP}:192.168.88.10:1011${POP}
-		e1/1 = nio_udp:1022${POP}:192.168.88.20:1012${POP}
-		e1/2 = nio_udp:3021${POP}:192.168.88.10:3011${POP}
-		e1/3 = nio_udp:3022${POP}:192.168.88.20:3012${POP}
+		e1/0 = nio_udp:1021${POP}:${SW1_IP}:1011${POP}
+		e1/1 = nio_udp:1022${POP}:${SW2_IP}:1012${POP}
+		e1/2 = nio_udp:3021${POP}:${TRANSIT1_IP}:3011${POP}
+		e1/3 = nio_udp:3022${POP}:${TRANSIT2_IP}:3012${POP}
 	
 	[[ROUTER R3]]
 		model = 7200

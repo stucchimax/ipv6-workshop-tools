@@ -7,6 +7,7 @@ MY_DIR=$(pwd -P)
 
 # Load image settings
 source ../settings/images
+source ../settings/nodes
 
 # Check command line arguments
 if [[ "$1" != [1-9] ]]; then
@@ -49,6 +50,10 @@ sed -e "s/\${POP}/${POP}/g" \
     -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
     -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
     -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
+    -e "s/\${SW1_IP}/${SW1_IP}/g" \
+    -e "s/\${SW2_IP}/${SW2_IP}/g" \
+    -e "s/\${TRANSIT1_IP}/${TRANSIT1_IP}/g" \
+    -e "s/\${TRANSIT2_IP}/${TRANSIT2_IP}/g" \
     < topology-template.net \
     > "${DIR}/pop-routers.net"
 
