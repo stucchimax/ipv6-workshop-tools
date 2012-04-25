@@ -6,13 +6,13 @@ cd "${MY_DIR}"
 MY_DIR=$(pwd -P)
 
 # Check command line
-if [[ ("$1" != "v4" && "$1" != "v6" && "$1" != "dual") || ("$2" != [1-9]) ]]; then
+if [[ ("$1" != "v4" && "$1" != "v6" && "$1" != "dual" && "$1" != "6rd") || ("$2" != [1-9]) ]]; then
 	echo "---------"
 	echo "- Usage -"
 	echo "---------"
 	echo "$0 <mode> <POP-count>"
 	echo ""
-	echo "Where <mode> is 'v4', 'v6' or 'dual'"
+	echo "Where <mode> is 'v4', 'v6', '6rd' or 'dual'"
 	echo "Where <POP-count> is a number from 1 to 9"
 	echo ""
 	exit 1
@@ -38,7 +38,16 @@ function set_possible_matches() {
 		fi
 		POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS" "${ROUTER_ID}-POP${OTHER_POP}EXISTS")
 	done
-	if [[ "${MODE}" == "v4" || "${MODE}" == "dual" ]]; then
+	if [[ "${MODE}" == "6rd" ]]; then
+		POSSIBLE_MATCHES+=("6rd" "${POP_ID}-6rd" "${POP_ID}-${ROUTER_ID}-6rd" "${ROUTER_ID}-6rd")
+		for OTHER_POP in `seq 1 ${POP_COUNT}`; do
+			if [[ "${OTHER_POP}" == "${POP}" ]]; then
+				continue
+			fi
+			POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS-v4" "${ROUTER_ID}-POP${OTHER_POP}EXISTS-6rd")
+		done
+	fi
+	if [[ "${MODE}" == "v4" || "${MODE}" == "dual" || "${MODE}" == "6rd" ]]; then
 		POSSIBLE_MATCHES+=("v4" "${POP_ID}-v4" "${POP_ID}-${ROUTER_ID}-v4" "${ROUTER_ID}-v4")
 		for OTHER_POP in `seq 1 ${POP_COUNT}`; do
 			if [[ "${OTHER_POP}" == "${POP}" ]]; then
@@ -73,16 +82,21 @@ function process_template() {
 	
 	# Start with the template
 	local SKIPPING=0
-	(IFS=""; while read -r line; do
+	(IFS="§"; while read -r line; do
 		if [[ "${line}" =~ ^[[:blank:]]*$ ]]; then
 			# Skip empty lines
 			continue
 		elif [[ "${line}" =~ ^(.*)[[:blank:]]*![[:blank:]]*ONLY\ (.*)[[:blank:]]*$ ]]; then
 			local WE_MATCH=0
 			line="${BASH_REMATCH[1]}"
-			for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
-				if [[ "${BASH_REMATCH[2]}" == "${POSSIBLE_MATCH}" ]]; then
-					WE_MATCH=1
+			for MATCH_PART in `echo "${BASH_REMATCH[2]}" | tr '|' '§'`; do
+				for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
+					if [[ "${MATCH_PART}" == "${POSSIBLE_MATCH}" ]]; then
+						WE_MATCH=1
+						break
+					fi
+				done
+				if [ "${WE_MATCH}" -eq "1" ]; then
 					break
 				fi
 			done
@@ -96,9 +110,14 @@ function process_template() {
 			continue
 		elif [[ "${line}" =~ ^[[:blank:]]*--ONLY\ (.*)--[[:blank:]]*$ ]]; then
 			WE_MATCH=0
-			for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
-				if [[ "${BASH_REMATCH[1]}" == "${POSSIBLE_MATCH}" ]]; then
-					WE_MATCH=1
+			for MATCH_PART in `echo "${BASH_REMATCH[1]}" | tr '|' '§'`; do
+				for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
+					if [[ "${MATCH_PART}" == "${POSSIBLE_MATCH}" ]]; then
+						WE_MATCH=1
+						break
+					fi
+				done
+				if [ "${WE_MATCH}" -eq "1" ]; then
 					break
 				fi
 			done
