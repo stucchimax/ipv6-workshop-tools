@@ -56,7 +56,7 @@ function set_possible_matches() {
 			POSSIBLE_MATCHES+=("POP${OTHER_POP}EXISTS-v4" "${ROUTER_ID}-POP${OTHER_POP}EXISTS-pre-6rd")
 		done
 	fi
-	if [[ "${MODE}" == "v4" || "${MODE}" == "dual" || "${MODE}" == "6rd" || "${MORE}" == "pre-6rd" ]]; then
+	if [[ "${MODE}" == "v4" || "${MODE}" == "dual" || "${MODE}" == "6rd" || "${MODE}" == "pre-6rd" ]]; then
 		POSSIBLE_MATCHES+=("v4" "${POP_ID}-v4" "${POP_ID}-${ROUTER_ID}-v4" "${ROUTER_ID}-v4")
 		for OTHER_POP in `seq 1 ${POP_COUNT}`; do
 			if [[ "${OTHER_POP}" == "${POP}" ]]; then
