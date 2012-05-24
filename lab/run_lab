@@ -43,6 +43,7 @@ fi
 
 POP_COUNT="$1"
 SERVER_NR="$2"
+SKIP="$3"
 
 # Get node settings
 source ./settings/nodes
@@ -85,11 +86,13 @@ fi
 POP_ROWS=$(( (${LOCAL_POP_COUNT} + 1) / 2 ))
 
 # Generate configs
-./cfg-generator/generate v4 "${POP_COUNT}"
-./cfg-generator/generate v6 "${POP_COUNT}"
-./cfg-generator/generate dual "${POP_COUNT}"
-./cfg-generator/generate pre-6rd "${POP_COUNT}"
-./cfg-generator/generate 6rd "${POP_COUNT}"
+if [ "${SKIP}" = "" ]; then
+	./cfg-generator/generate v4 "${POP_COUNT}"
+	./cfg-generator/generate v6 "${POP_COUNT}"
+	./cfg-generator/generate dual "${POP_COUNT}"
+	./cfg-generator/generate pre-6rd "${POP_COUNT}"
+	./cfg-generator/generate 6rd "${POP_COUNT}"
+fi
 
 echo "-------------------------------------"
 echo "- Starting lab sections with ${POP_COUNT} POPs -"
