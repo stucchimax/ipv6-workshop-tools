@@ -25,12 +25,12 @@ cd "${MY_DIR}"
 MY_DIR=$(pwd -P)
 
 # Check command line
-if [[ "$1" != [1-9] || "$2" != [1-3] ]]; then
+if [[ "$1" != [1-9] || "$2" != [1-3] || ( "$3" != "make" && "$3" != "run" && "$3" != "both" && "$3" != "" ) ]]; then
 	echo "========================"
 	echo "|| IPv6 LAB Generator ||"
 	echo "========================"
 	echo "Usage:"
-	echo -e "\t$0 <POP-count> <Server-nr>"
+	echo -e "\t$0 <POP-count> <Server-nr> [make|run|both]"
 	echo ""
 	echo "Where <POP-count> is a number from 1 to 9"
 	echo "Where <Server-nr> is either 1, 2 or 3"
@@ -43,7 +43,12 @@ fi
 
 POP_COUNT="$1"
 SERVER_NR="$2"
-SKIP="$3"
+ACTION="$3"
+
+# Set default
+if [ "${ACTION}" = "" ]; then
+	ACTION="both"
+fi
 
 # Get node settings
 source ./settings/nodes
@@ -86,12 +91,17 @@ fi
 POP_ROWS=$(( (${LOCAL_POP_COUNT} + 1) / 2 ))
 
 # Generate configs
-if [ "${SKIP}" = "" ]; then
+if [ "${ACTION}" = "make" -o "${ACTION}" = "both" ]; then
 	./cfg-generator/generate v4 "${POP_COUNT}"
 	./cfg-generator/generate v6 "${POP_COUNT}"
 	./cfg-generator/generate dual "${POP_COUNT}"
 	./cfg-generator/generate pre-6rd "${POP_COUNT}"
 	./cfg-generator/generate 6rd "${POP_COUNT}"
+fi
+
+# Stop, unless we want to run
+if [ "${ACTION}" != "run" -a "${ACTION}" != "both" ]; then
+	exit
 fi
 
 echo "-------------------------------------"
