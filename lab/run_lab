@@ -120,22 +120,26 @@ WINDOW_HEIGHT=$(( (${DESKTOP_HEIGHT} - ${MARGIN_TOP} - ${MARGIN_BOTTOM}) / (${PO
 # Move this window to top left
 osascript -e "tell application\"Terminal\" to set the bounds of its front window to {${MARGIN_LEFT}, ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
 
+ROW=1
 for SWITCH in ${LOCAL_SWITCHES}; do
 	# Start Core Switches
 	WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/core-switches/run ${SWITCH}; exit\"" | cut -d ' ' -f 6)
 	osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"Core-Switch ${SWITCH}\""
 
 	# Move this window to top right
-	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH_NARROW} )), ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
+	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} * ${ROW} )), $(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH_NARROW} )), $(( (${MARGIN_TOP} * ${ROW}) + ${WINDOW_HEIGHT} ))}"
+	ROW=$((ROW+1))
 done
 
+ROW=1
 for TRANSIT in ${LOCAL_TRANSITS}; do
 	# Start Transit Routers
 	WIN_ID=$(osascript -e "tell application \"Terminal\" to do script \"${MY_DIR}/transit-routers/run ${TRANSIT}; exit\"" | cut -d ' ' -f 6)
 	osascript -e "tell application \"Terminal\" to tell window id ${WIN_ID} to tell its selected tab to set its custom title to \"Transit-Router ${TRANSIT}\""
 
 	# Move this window to top right
-	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH_NARROW} )), ${MARGIN_TOP}, $(( ${MARGIN_LEFT} + 3 * ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} + ${WINDOW_HEIGHT} ))}"
+	osascript -e "tell application\"Terminal\" to set the bounds of window id ${WIN_ID} to {$(( ${MARGIN_LEFT} + 2 * ${WINDOW_WIDTH_NARROW} )), $(( ${MARGIN_TOP} * ${ROW} )), $(( ${MARGIN_LEFT} + 3 * ${WINDOW_WIDTH_NARROW} )), $(( (${MARGIN_TOP} * ${ROW}) + ${WINDOW_HEIGHT} ))}"
+	ROW=$((ROW+1))
 done
 
 PLACEMENT="left"
