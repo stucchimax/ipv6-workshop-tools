@@ -10,79 +10,92 @@ source ../settings/images
 source ../settings/nodes
 
 # Check command line
-if [[ "$1" != [1-2] ]]; then
+if [[ "$1" != [1-2] || ( "$2" != "make" && "$2" != "run" && "$2" != "both" && "$2" != "" ) ]]; then
         echo "======================"
         echo "|| IPv6 Core Switch ||"
         echo "======================"
         echo "Usage:"
-        echo -e "\t$0 <Server-nr>"
+        echo -e "\t$0 <Server-nr> [make|run|both]"
         echo ""
         echo "Where <Server-nr> is either 1 or 2"
 	exit 1
 fi
 
 SWITCH="$1"
+ACTION="$2"
+
+# Set default
+if [ "${ACTION}" = "" ]; then
+	ACTION="both"
+fi
+
 DIR="../working/SW${SWITCH}"
 DYNAMIPS_PORT=$((7000 + ${SWITCH}))
 
-echo "---------------------------------------------"
-echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
-echo "---------------------------------------------"
+if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
+	echo "---------------------------------------------"
+	echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
+	echo "---------------------------------------------"
 
-mkdir -p "${DIR}"
-cd "${DIR}"
-#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
-../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-echo $! > dynamips.pid
-cd "${MY_DIR}"
+	mkdir -p "${DIR}"
+	cd "${DIR}"
+	#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
+	../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	echo $! > dynamips.pid
+	cd "${MY_DIR}"
 
-sleep 1
+	sleep 1
 
-echo -n "PID: "
-cat "${DIR}/dynamips.pid"
-echo ""
+	echo -n "PID: "
+	cat "${DIR}/dynamips.pid"
+	echo ""
+fi
 
-echo ""
-echo "------------------------------------------------------"
-echo "- Generating Dynagen configuration for core switches -"
-echo "------------------------------------------------------"
+if [ "${ACTION}" = "make" -o "${ACTION}" = "both" ]; then
+	echo ""
+	echo "------------------------------------------------------"
+	echo "- Generating Dynagen configuration for core switches -"
+	echo "------------------------------------------------------"
 
-sed -e "s/\${C3725_IMAGE}/${C3725_IMAGE}/g" \
-    -e "s/\${C3725_IDLEPC}/${C3725_IDLEPC}/g" \
-    -e "s/\${C3725_RAM}/${C3725_RAM}/g" \
-    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
-    -e "s/\${SWITCH}/${SWITCH}/g" \
-    -e "s/\${POP1_IP}/${POP1_IP}/g" \
-    -e "s/\${POP2_IP}/${POP2_IP}/g" \
-    -e "s/\${POP3_IP}/${POP3_IP}/g" \
-    -e "s/\${POP4_IP}/${POP4_IP}/g" \
-    -e "s/\${POP5_IP}/${POP5_IP}/g" \
-    -e "s/\${POP6_IP}/${POP6_IP}/g" \
-    -e "s/\${POP7_IP}/${POP7_IP}/g" \
-    -e "s/\${POP8_IP}/${POP8_IP}/g" \
-    -e "s/\${POP9_IP}/${POP9_IP}/g" \
-    < topology-template.net \
-    > "${DIR}/core-switch.net"
+	sed -e "s/\${C3725_IMAGE}/${C3725_IMAGE}/g" \
+	    -e "s/\${C3725_IDLEPC}/${C3725_IDLEPC}/g" \
+	    -e "s/\${C3725_RAM}/${C3725_RAM}/g" \
+	    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
+	    -e "s/\${SWITCH}/${SWITCH}/g" \
+	    -e "s/\${POP1_IP}/${POP1_IP}/g" \
+	    -e "s/\${POP2_IP}/${POP2_IP}/g" \
+	    -e "s/\${POP3_IP}/${POP3_IP}/g" \
+	    -e "s/\${POP4_IP}/${POP4_IP}/g" \
+	    -e "s/\${POP5_IP}/${POP5_IP}/g" \
+	    -e "s/\${POP6_IP}/${POP6_IP}/g" \
+	    -e "s/\${POP7_IP}/${POP7_IP}/g" \
+	    -e "s/\${POP8_IP}/${POP8_IP}/g" \
+	    -e "s/\${POP9_IP}/${POP9_IP}/g" \
+	    < topology-template.net \
+	    > "${DIR}/core-switch.net"
+fi
 
-echo ""
-echo "---------------------------------------------------"
-echo "- Starting Dynagen with core switch configuration -"
-echo "---------------------------------------------------"
+if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
+	echo ""
+	echo "---------------------------------------------------"
+	echo "- Starting Dynagen with core switch configuration -"
+	echo "---------------------------------------------------"
 
-../bin/dynagen/dynagen "${DIR}/core-switch.net"
+	../bin/dynagen/dynagen "${DIR}/core-switch.net"
 
-echo ""
-echo "---------------------------------------------"
-echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
-echo "---------------------------------------------"
+	echo ""
+	echo "---------------------------------------------"
+	echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
+	echo "---------------------------------------------"
 
-kill `cat "${DIR}/dynamips.pid"`
+	kill `cat "${DIR}/dynamips.pid"`
 
-echo -n "Killed PID: "
-cat "${DIR}/dynamips.pid"
-echo ""
+	echo -n "Killed PID: "
+	cat "${DIR}/dynamips.pid"
+	echo ""
 
-rm -f "${DIR}/dynamips.pid"
+	rm -f "${DIR}/dynamips.pid"
+fi
 
 echo ""

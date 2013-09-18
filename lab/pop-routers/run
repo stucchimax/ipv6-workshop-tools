@@ -10,11 +10,11 @@ source ../settings/images
 source ../settings/nodes
 
 # Check command line arguments
-if [[ "$1" != [1-9] ]]; then
+if [[ "$1" != [1-9] || ( "$2" != "make" && "$2" != "run" && "$2" != "both" && "$2" != "" ) ]]; then
 	echo "---------"
 	echo "- Usage -"
 	echo "---------"
-	echo "$0 <POP-id>"
+	echo "$0 <POP-id> [make|run|both]"
 	echo ""
 	echo "Where <POP-id> is a number from 1 to 9"
 	echo ""
@@ -22,62 +22,75 @@ if [[ "$1" != [1-9] ]]; then
 fi
 
 POP="$1"
+ACTION="$2"
+
+# Set default
+if [ "${ACTION}" = "" ]; then
+	ACTION="both"
+fi
+
 DIR="../working/POP${POP}"
 DYNAMIPS_PORT=$[ 7020 + ${POP} ];
 
-echo "---------------------------------------------"
-echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
-echo "---------------------------------------------"
+if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
+	echo "---------------------------------------------"
+	echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
+	echo "---------------------------------------------"
 
-mkdir -p "${DIR}"
-cd "${DIR}"
-#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
-../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-echo $! > dynamips.pid
-cd "${MY_DIR}"
+	mkdir -p "${DIR}"
+	cd "${DIR}"
+	#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
+	../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	echo $! > dynamips.pid
+	cd "${MY_DIR}"
 
-sleep 1
+	sleep 1
 
-echo -n "PID: "
-cat "${DIR}/dynamips.pid"
-echo ""
+	echo -n "PID: "
+	cat "${DIR}/dynamips.pid"
+	echo ""
+fi
 
-echo ""
-echo "----------------------------------------------"
-echo "- Generating Dynagen configuration for POP ${POP} -"
-echo "----------------------------------------------"
+if [ "${ACTION}" = "make" -o "${ACTION}" = "both" ]; then
+	echo ""
+	echo "----------------------------------------------"
+	echo "- Generating Dynagen configuration for POP ${POP} -"
+	echo "----------------------------------------------"
 
-sed -e "s/\${POP}/${POP}/g" \
-    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
-    -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
-    -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
-    -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
-    -e "s/\${SW1_IP}/${SW1_IP}/g" \
-    -e "s/\${SW2_IP}/${SW2_IP}/g" \
-    -e "s/\${TRANSIT1_IP}/${TRANSIT1_IP}/g" \
-    -e "s/\${TRANSIT2_IP}/${TRANSIT2_IP}/g" \
-    < topology-template.net \
-    > "${DIR}/pop-routers.net"
+	sed -e "s/\${POP}/${POP}/g" \
+	    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
+	    -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
+	    -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
+	    -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
+	    -e "s/\${SW1_IP}/${SW1_IP}/g" \
+	    -e "s/\${SW2_IP}/${SW2_IP}/g" \
+	    -e "s/\${TRANSIT1_IP}/${TRANSIT1_IP}/g" \
+	    -e "s/\${TRANSIT2_IP}/${TRANSIT2_IP}/g" \
+	    < topology-template.net \
+	    > "${DIR}/pop-routers.net"
+fi
 
-echo ""
-echo "----------------------------------------------------"
-echo "- Starting Dynagen with POP ${POP} router configuration -"
-echo "----------------------------------------------------"
+if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
+	echo ""
+	echo "----------------------------------------------------"
+	echo "- Starting Dynagen with POP ${POP} router configuration -"
+	echo "----------------------------------------------------"
 
-../bin/dynagen/dynagen "${DIR}/pop-routers.net"
+	../bin/dynagen/dynagen "${DIR}/pop-routers.net"
 
-echo ""
-echo "---------------------------------------------"
-echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
-echo "---------------------------------------------"
+	echo ""
+	echo "---------------------------------------------"
+	echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
+	echo "---------------------------------------------"
 
-kill `cat "${DIR}/dynamips.pid"`
+	kill `cat "${DIR}/dynamips.pid"`
 
-echo -n "Killed PID: "
-cat "${DIR}/dynamips.pid"
-echo ""
+	echo -n "Killed PID: "
+	cat "${DIR}/dynamips.pid"
+	echo ""
 
-rm -f "${DIR}/dynamips.pid"
+	rm -f "${DIR}/dynamips.pid"
+fi
 
 echo ""
