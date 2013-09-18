@@ -32,7 +32,8 @@ echo "---------------------------------------------"
 mkdir -p "${DIR}"
 cd "${DIR}"
 #../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
+#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
+../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
 echo $! > dynamips.pid
 cd "${MY_DIR}"
 
