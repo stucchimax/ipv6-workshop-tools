@@ -97,6 +97,8 @@ if [ "${ACTION}" = "make" -o "${ACTION}" = "both" ]; then
 	./cfg-generator/generate dual "${POP_COUNT}"
 	./cfg-generator/generate pre-6rd "${POP_COUNT}"
 	./cfg-generator/generate 6rd "${POP_COUNT}"
+	./cfg-generator/generate pre-dhcp "${POP_COUNT}"
+	./cfg-generator/generate dhcp "${POP_COUNT}"
 fi
 
 # Stop, unless we want to run
