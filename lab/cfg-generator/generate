@@ -109,14 +109,14 @@ function process_template() {
 	
 	# Start with the template
 	local SKIPPING=0
-	(IFS="§"; while read -r line; do
+	(IFS="@"; while read -r line; do
 		if [[ "${line}" =~ ^[[:blank:]]*$ ]]; then
 			# Skip empty lines
 			continue
 		elif [[ "${line}" =~ ^(.*)[[:blank:]]*![[:blank:]]*ONLY\ (.*)[[:blank:]]*$ ]]; then
 			local WE_MATCH=0
 			line="${BASH_REMATCH[1]}"
-			for MATCH_PART in `echo "${BASH_REMATCH[2]}" | tr '|' '§'`; do
+			for MATCH_PART in `echo "${BASH_REMATCH[2]}" | tr '|' '@'`; do
 				for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
 					if [[ "${MATCH_PART}" == "${POSSIBLE_MATCH}" ]]; then
 						WE_MATCH=1
@@ -137,7 +137,7 @@ function process_template() {
 			continue
 		elif [[ "${line}" =~ ^[[:blank:]]*--ONLY\ (.*)--[[:blank:]]*$ ]]; then
 			WE_MATCH=0
-			for MATCH_PART in `echo "${BASH_REMATCH[1]}" | tr '|' '§'`; do
+			for MATCH_PART in `echo "${BASH_REMATCH[1]}" | tr '|' '@'`; do
 				for POSSIBLE_MATCH in "${POSSIBLE_MATCHES[@]}"; do
 					if [[ "${MATCH_PART}" == "${POSSIBLE_MATCH}" ]]; then
 						WE_MATCH=1

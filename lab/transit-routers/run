@@ -42,6 +42,7 @@ if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
 	#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
 	#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
 	../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	#dynamips -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
 	echo $! > dynamips.pid
 	cd "${MY_DIR}"
 
@@ -82,7 +83,10 @@ if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
 	echo "- Starting Dynagen with transit router configuration -"
 	echo "------------------------------------------------------"
 
-	../bin/dynagen/dynagen "${DIR}/transit-router.net"
+	cd "${DIR}"
+	../bin/dynagen/dynagen "transit-router.net"
+	#dynagen "transit-router.net"
+	cd "${MY_DIR}"
 
 	echo ""
 	echo "---------------------------------------------"
