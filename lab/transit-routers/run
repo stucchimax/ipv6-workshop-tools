@@ -84,7 +84,7 @@ if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
 	echo "------------------------------------------------------"
 
 	cd "${DIR}"
-	../bin/dynagen/dynagen "transit-router.net"
+	../../bin/dynagen/dynagen "transit-router.net"
 	#dynagen "transit-router.net"
 	cd "${MY_DIR}"
 
