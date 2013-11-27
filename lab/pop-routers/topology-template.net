@@ -1,5 +1,7 @@
 autostart = False
-ghostios = True
+ghostios = False
+sparsemem = False
+mmap = False
 
 [localhost:${DYNAMIPS_PORT}]
 	workingdir = .
@@ -9,6 +11,9 @@ ghostios = True
 		image = ../../images/${C7200_IMAGE}
 		idlepc = ${C7200_IDLEPC}
 		ram = ${C7200_RAM}
+		ghostios = False
+		sparsemem = False
+		mmap = False
 	
 	[[ROUTER R1]]
 		model = 7200
