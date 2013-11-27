@@ -92,13 +92,13 @@ POP_ROWS=$(( (${LOCAL_POP_COUNT} + 1) / 2 ))
 
 # Generate configs
 if [ "${ACTION}" = "make" -o "${ACTION}" = "both" ]; then
-	./cfg-generator/generate v4 "${POP_COUNT}"
-	./cfg-generator/generate v6 "${POP_COUNT}"
-	./cfg-generator/generate dual "${POP_COUNT}"
-	./cfg-generator/generate pre-6rd "${POP_COUNT}"
-	./cfg-generator/generate 6rd "${POP_COUNT}"
-	./cfg-generator/generate pre-dhcp "${POP_COUNT}"
-	./cfg-generator/generate dhcp "${POP_COUNT}"
+	./cfg-generator/generate v4 "${POP_COUNT}" "${ACTION}"
+	./cfg-generator/generate v6 "${POP_COUNT}" "${ACTION}"
+	./cfg-generator/generate dual "${POP_COUNT}" "${ACTION}"
+	./cfg-generator/generate pre-6rd "${POP_COUNT}" "${ACTION}"
+	./cfg-generator/generate 6rd "${POP_COUNT}" "${ACTION}"
+	./cfg-generator/generate pre-dhcp "${POP_COUNT}" "${ACTION}"
+	./cfg-generator/generate dhcp "${POP_COUNT}" "${ACTION}"
 fi
 
 # Stop, unless we want to run

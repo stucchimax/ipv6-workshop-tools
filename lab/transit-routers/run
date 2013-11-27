@@ -10,7 +10,7 @@ source ../settings/images
 source ../settings/nodes
 
 # Check command line
-if [[ "$1" != [1-2] ]]; then
+if [[ "$1" != [1-2] || ( "$2" != "make" && "$2" != "run" && "$2" != "both" && "$2" != "" ) ]]; then
         echo "======================"
         echo "|| IPv6 Core Switch ||"
         echo "======================"
@@ -22,67 +22,84 @@ if [[ "$1" != [1-2] ]]; then
 fi
 
 TRANSIT="$1"
+ACTION="$2"
+
+# Set default
+if [ "${ACTION}" = "" ]; then
+	ACTION="both"
+fi
+
 DIR="../working/TRANSIT${TRANSIT}"
 DYNAMIPS_PORT=$((7010 + ${TRANSIT}))
 
-echo "---------------------------------------------"
-echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
-echo "---------------------------------------------"
+if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
+	echo "---------------------------------------------"
+	echo "- Starting Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
+	echo "---------------------------------------------"
 
-mkdir -p "${DIR}"
-cd "${DIR}"
-#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
-../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
-echo $! > dynamips.pid
-cd "${MY_DIR}"
+	mkdir -p "${DIR}"
+	cd "${DIR}"
+	#../../bin/dynamips-0.2.8-RC3-community-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	#../../bin/dynamips-0.2.8-RC2-x86 -H ${DYNAMIPS_PORT} &> dynamips.out &
+	../../bin/dynamips-0.2.10-OSX.intel64.bin -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	#dynamips -H ${DYNAMIPS_PORT} --filepid dynamips.pid &> dynamips.out &
+	echo $! > dynamips.pid
+	cd "${MY_DIR}"
 
-sleep 1
+	sleep 1
 
-echo -n "PID: "
-cat "${DIR}/dynamips.pid"
-echo ""
+	echo -n "PID: "
+	cat "${DIR}/dynamips.pid"
+	echo ""
+fi
 
-echo ""
-echo "--------------------------------------------------------"
-echo "- Generating Dynagen configuration for transit routers -"
-echo "--------------------------------------------------------"
+if [ "${ACTION}" = "make" -o "${ACTION}" = "both" ]; then
+	echo ""
+	echo "--------------------------------------------------------"
+	echo "- Generating Dynagen configuration for transit routers -"
+	echo "--------------------------------------------------------"
 
-sed -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
-    -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
-    -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
-    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
-    -e "s/\${TRANSIT}/${TRANSIT}/g" \
-    -e "s/\${POP1_IP}/${POP1_IP}/g" \
-    -e "s/\${POP2_IP}/${POP2_IP}/g" \
-    -e "s/\${POP3_IP}/${POP3_IP}/g" \
-    -e "s/\${POP4_IP}/${POP4_IP}/g" \
-    -e "s/\${POP5_IP}/${POP5_IP}/g" \
-    -e "s/\${POP6_IP}/${POP6_IP}/g" \
-    -e "s/\${POP7_IP}/${POP7_IP}/g" \
-    -e "s/\${POP8_IP}/${POP8_IP}/g" \
-    -e "s/\${POP9_IP}/${POP9_IP}/g" \
-    < topology-template.net \
-    > "${DIR}/transit-router.net"
+	sed -e "s/\${C7200_IMAGE}/${C7200_IMAGE}/g" \
+	    -e "s/\${C7200_IDLEPC}/${C7200_IDLEPC}/g" \
+	    -e "s/\${C7200_RAM}/${C7200_RAM}/g" \
+	    -e "s/\${DYNAMIPS_PORT}/${DYNAMIPS_PORT}/g" \
+	    -e "s/\${TRANSIT}/${TRANSIT}/g" \
+	    -e "s/\${POP1_IP}/${POP1_IP}/g" \
+	    -e "s/\${POP2_IP}/${POP2_IP}/g" \
+	    -e "s/\${POP3_IP}/${POP3_IP}/g" \
+	    -e "s/\${POP4_IP}/${POP4_IP}/g" \
+	    -e "s/\${POP5_IP}/${POP5_IP}/g" \
+	    -e "s/\${POP6_IP}/${POP6_IP}/g" \
+	    -e "s/\${POP7_IP}/${POP7_IP}/g" \
+	    -e "s/\${POP8_IP}/${POP8_IP}/g" \
+	    -e "s/\${POP9_IP}/${POP9_IP}/g" \
+	    < topology-template.net \
+	    > "${DIR}/transit-router.net"
+fi
 
-echo ""
-echo "------------------------------------------------------"
-echo "- Starting Dynagen with transit router configuration -"
-echo "------------------------------------------------------"
+if [ "${ACTION}" = "run" -o "${ACTION}" = "both" ]; then
+	echo ""
+	echo "------------------------------------------------------"
+	echo "- Starting Dynagen with transit router configuration -"
+	echo "------------------------------------------------------"
 
-../bin/dynagen/dynagen "${DIR}/transit-router.net"
+	cd "${DIR}"
+	../bin/dynagen/dynagen "transit-router.net"
+	#dynagen "transit-router.net"
+	cd "${MY_DIR}"
 
-echo ""
-echo "---------------------------------------------"
-echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
-echo "---------------------------------------------"
+	echo ""
+	echo "---------------------------------------------"
+	echo "- Stopping Dynamips Hypervisor on port ${DYNAMIPS_PORT} -"
+	echo "---------------------------------------------"
 
-kill `cat "${DIR}/dynamips.pid"`
+	kill `cat "${DIR}/dynamips.pid"`
 
-echo -n "Killed PID: "
-cat "${DIR}/dynamips.pid"
-echo ""
+	echo -n "Killed PID: "
+	cat "${DIR}/dynamips.pid"
+	echo ""
 
-rm -f "${DIR}/dynamips.pid"
+	rm -f "${DIR}/dynamips.pid"
+fi
 
 echo ""
